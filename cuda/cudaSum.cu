@@ -3,12 +3,16 @@
 #include <cassert>
 #include <cmath>
 #include <cuda_runtime.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <chrono>
 
 uint64_t now() {
-    timeval tv;
-    ::gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    //timeval tv;
+    //::gettimeofday(&tv, NULL);
+    //return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    //
+    const auto ts = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch()).count();
 }
 
 // 错误检查宏
@@ -336,8 +340,8 @@ int main() {
     std::cout << "CUDA总和: " << gpu_sum << " cost:" << gts << std::endl;
     std::cout << "CUDA总和: " << gpu_sum1 << " cost:" << gts1 << std::endl;
     std::cout << "CUDA总和: " << gpu_sum2 << " cost:" << gts2 << std::endl;
-    assert(fabs(gpu_sum - cpu_sum) < 1e-3f && "结果不一致！");
-    std::cout << "验证通过：结果一致。" << std::endl;
+    assert(fabs(gpu_sum - cpu_sum) < 1e-3f && " not ok!!!");
+    std::cout << "cpu & gpu result is ok" << std::endl;
 
     return 0;
 }
