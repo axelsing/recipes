@@ -3,15 +3,14 @@
 #include <cassert>
 #include <cmath>
 #include <cuda_runtime.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <chrono>
 
 uint64_t now() {
-    timeval tv;
-    ::gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    auto p = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(p.time_since_epoch()).count();
 }
 
-// 错误检查宏
 #define CHECK(call) \
     do { \
         cudaError_t err = call; \
@@ -21,14 +20,7 @@ uint64_t now() {
         } \
     } while (0)
 
-/**
- * 核函数：计算数组总和（通过输出指针返回结果）
- * @param arr 输入数组（设备端）
- * @param n 数组长度
- * @param result 输出指针（设备端，存储总和结果）
- */
 __global__ void sumKernel(const double* arr, size_t n, double* result) {
-    // 共享内存：存储块内部分和（大小由核函数启动时指定）
     extern __shared__ double sdata[];
 
     unsigned int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -58,12 +50,6 @@ __global__ void sumKernel(const double* arr, size_t n, double* result) {
     }
 }
 
-/**
- * 主机端接口：计算数组总和
- * @param h_arr 主机端输入数组
- * @param n 数组长度
- * @return 总和结果
- */
 uint64_t gts = 0;
 double cudaSum(const double* h_arr, size_t n) {
     if (n == 0) return 0.0f;
@@ -224,12 +210,6 @@ __global__ void blockPartialSumKernel(const double* arr, size_t n, double* d_par
     }
 }
 
-/**
- * 第二步核函数：汇总所有块的部分和，得到最终结果
- * @param d_partial_sums 全局临时数组（每个块的部分和）
- * @param num_blocks 块的总数（即临时数组长度）
- * @param d_result 最终结果（设备端）
- */
 __global__ void sumPartialSumsKernel(const double* d_partial_sums, size_t num_blocks, double* d_result) {
     extern __shared__ double sdata[];
 
@@ -253,12 +233,6 @@ __global__ void sumPartialSumsKernel(const double* d_partial_sums, size_t num_bl
     }
 }
 
-/**
- * 主机端接口：用共享内存累加替代全局atomicAdd
- * @param h_arr 主机输入数组
- * @param n 数组长度
- * @return 总和结果
- */
 uint64_t gts2 = 0;
 double cudaSumShared(const double* h_arr, size_t n) {
     if (n == 0) return 0.0f;
@@ -306,7 +280,6 @@ double cudaSumShared(const double* h_arr, size_t n) {
     return h_result;
 }
 
-// 验证代码
 int main() {
     // 生成测试数据
     const size_t n = 1000000000;
@@ -336,13 +309,13 @@ int main() {
     std::cout << "CUDA总和: " << gpu_sum << " cost:" << gts << std::endl;
     std::cout << "CUDA总和: " << gpu_sum1 << " cost:" << gts1 << std::endl;
     std::cout << "CUDA总和: " << gpu_sum2 << " cost:" << gts2 << std::endl;
-    assert(fabs(gpu_sum - cpu_sum) < 1e-3f && "结果不一致！");
-    std::cout << "验证通过：结果一致。" << std::endl;
+    assert(fabs(gpu_sum - cpu_sum) < 1e-3f && "not OK!");
+    std::cout << "pass, perfect!" << std::endl;
 
     return 0;
 }
 
-// double -> double
+// float -> double
 // nvcc -v -arch=native -g -G -O0 ./cudaSum.cu -o cudaSum
 
 // L20 env

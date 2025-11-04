@@ -1,0 +1,24 @@
+
+1、 CUDA Crash Course
+
+B站：https://www.bilibili.com/video/BV127411G76m?p=1&vd_source=5d09aad9eacf6d90c0a17cf81ee41eef
+youtube：https://www.youtube.com/watch?v=2NgpYFdsduY&list=PLxNPSjHT5qvtYRVdNN1yDcdSl39uHV_sU
+教学视频对应的源代码都在这里：https://github.com/CoffeeBeforeArch/cuda_programming/tree/master
+
+
+
+
+
+
+
+
+
+
+
+# win err
+
+nvcc error 'cudafe++' died with status 0xC0000005 （ACCESS VIOLATION）
+
+path 要使用 x64 cl.exe  （如果使用的x86 cl.exe就会出现上面的错）
+
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\bin\Hostx64\x64
