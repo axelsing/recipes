@@ -20,7 +20,16 @@
 
 
 
-
+# CUDA 程序的性能优化核心是最大化利用 GPU 的并行计算能力和内存带宽，经典优化方法围绕内存访问更高效、并行粒度更合理、指令效率更紧凑三个维度展开。以下是最常用的 6 类优化方法
+    全局内存合并访问（Global Memory Coalescing）
+    共享内存优化（Shared Memory Optimization） 数据复用 & 避免 Bank 冲突。 __syncthreads();
+    避免分支发散（Branch Divergence）  比如用数学运算替代分支
+    常量内存与纹理内存（Constant & Texture Memory）。__constant__ float c_kernel[256];  // 常量内存数组 cudaMemcpyToSymbol
+    线程块大小优化（Block Size Tuning） 256/512/1024 是最优选择
+    循环展开（Loop Unrolling） 
+    
+    nsys 性能分析器。先优化内存，再优化计算。 这些经典方法在卷积、矩阵乘法、归约等核心算子
+    
 
 
 # win err
