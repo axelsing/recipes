@@ -1,4 +1,9 @@
 
+0、tools
+	nvcc -v -arch=native -g -G -pg -O0 helloWorld.cu -o helloWorld
+	nvcc -arch-ls -code-ls
+	
+
 1、 CUDA Crash Course
 
     B站：https://www.bilibili.com/video/BV127411G76m?p=1&vd_source=5d09aad9eacf6d90c0a17cf81ee41eef
