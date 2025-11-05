@@ -359,4 +359,4 @@ int main(int argc, char **argv) {
   exit(EXIT_SUCCESS);
 }
 
-// nvcc -v -I.  -lcuda -arch=native -g -G -O0 ./deviceQueryDrv.cpp -o deviceQueryDrv
+// nvcc -v -I.  -lcuda -arch=native -pg -g -G -O0 ./deviceQueryDrv.cpp -o deviceQueryDrv
