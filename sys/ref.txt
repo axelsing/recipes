@@ -1,0 +1,11 @@
+
+
+1、部分参考资料：
+
+    一本神书：《数据密集型应用系统设计》
+    Notes on Designing Data-Intensive Applications http://kate-travers.com/blog/posts/designing-data-intensive-applications
+    https://gist.github.com/bcherny/b870a60d1650973df7e400c8603ac76d
+    《The Google File System》（2003） https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/gfs-sosp2003.pdf
+    《The Google File System》论文翻译（GFS-SOSP2003）  http://blog.mrcroxx.com/posts/paper-reading/gfs-sosp2003/#23-%E6%9E%B6%E6%9E%84
+    Spanner: Google's Globally-Distributed Database     https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/spanner-osdi2012.pdf
+    Google去中心化分布式系统论文三件套（Percolator、Spanner、F1） https://cloud.tencent.com/developer/article/2241471

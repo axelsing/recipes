@@ -1,7 +1,14 @@
 
 0、tools
 	nvcc -v -arch=native -g -G -pg -O0 helloWorld.cu -o helloWorld
+    nvcc -arch=native -g -G -g -O0 --ptxas-options="-v" cudaSum.cu  # registers verbose
 	nvcc -arch-ls -code-ls
+    
+    nsys nvprof ./cudaSum
+
+    nsys profile --trace=cuda,nvtx,osrt,cudnn,cublas -o sum_profile ./cudaSum
+    nsys stats sum_profile.nsys-rep
+    nsys analyze sum_profile.nsys-rep
 	
 
 1、 CUDA Crash Course
@@ -33,8 +40,72 @@
     线程块大小优化（Block Size Tuning） 256/512/1024 是最优选择
     循环展开（Loop Unrolling） 
     
-    nsys 性能分析器。先优化内存，再优化计算。 这些经典方法在卷积、矩阵乘法、归约等核心算子
+    nsys 性能分析器。先优化内存，再优化计算。 这些经典方法在卷积、矩阵乘法、归约等核心算子。
+    常用于归约（Reduction）、前缀和（Prefix Sum）、扫描（Scan）等算法。
     
+
+    类别	                            关键词	                        一句话记忆
+    SIMT（单指令多线程）	            GPU 基础架构	                线程独立，分支发散慢
+    Bank Conflict（共享内存银行冲突）	同 Bank 不同地址访问	        padding + 对齐避免
+    Register Spilling（寄存器溢出）	    超限溢出到本地内存	慢，        用 --ptxas-options=-v 查
+    Occupancy（占用率）	                并行度指标	                    Warp 活跃度，不总是越高越好
+    CUDA 函数限定符	                    __host__ / __device__ / __global__	调用位置不同
+    Unified Memory（统一内存）	        自动迁移数据	                易用但慢，可 prefetch
+    GPU 吞吐率高原因	                SIMT + 延迟隐藏	                并发多，单核弱
+    Warp Shuffle（线程束洗牌）	        线程寄存器直接通信	            共享内存更快替代
+    Stream Priority（流优先级）	        高优先任务先执行	            cudaStreamCreateWithPriority()
+    Memory Alignment（内存对齐）	    合并访问关键	                cudaMallocPitch() 自动对齐
+    Shared vs Register	                共享=块内缓存，寄存器=私有	    层次越近越快
+    PCIe 带宽瓶颈	                    CPU↔GPU 通道慢	                异步+页锁定减少传输
+    Error Propagation（错误传播）	    错误延迟触发	                CUDA_CHECK 宏统一检查
+    Prefix Sum（前缀和）	            并行扫描算法	                上升树 + 下降树
+
+# trtexec metric
+    # trtexec --loadEngine=model_fp16.trt8 --verbose
+    [11/13/2025-14:12:48] [I] [TRT] [MemUsageChange] TensorRT-managed allocation in building engine: CPU +12, GPU +36, now: CPU 12, GPU 36 (MiB)
+    [11/13/2025-14:12:48] [I] Engine built in 33.1649 sec.
+    [11/13/2025-14:12:48] [I] [TRT] [MemUsageChange] Init CUDA: CPU +0, GPU +0, now: CPU 3472, GPU 1209 (MiB)
+    [11/13/2025-14:12:48] [I] [TRT] Loaded engine size: 35 MiB
+    [11/13/2025-14:12:48] [V] [TRT] Deserialization required 15757 microseconds.
+    [11/13/2025-14:12:48] [I] [TRT] [MemUsageChange] TensorRT-managed allocation in engine deserialization: CPU +0, GPU +35, now: CPU 0, GPU 35 (MiB)
+    [11/13/2025-14:12:48] [I] Engine deserialized in 0.018678 sec.
+    [11/13/2025-14:12:48] [V] [TRT] Total per-runner device persistent memory is 8192
+    [11/13/2025-14:12:48] [V] [TRT] Total per-runner host persistent memory is 15040
+    [11/13/2025-14:12:48] [V] [TRT] Allocated activation device memory of size 2140160
+    [11/13/2025-14:12:48] [I] [TRT] [MemUsageChange] TensorRT-managed allocation in IExecutionContext creation: CPU +0, GPU +2, now: CPU 0, GPU 37 (MiB)
+    [11/13/2025-14:12:48] [I] Using random values for input input:0
+    [11/13/2025-14:12:48] [I] Created input binding for input:0 with dimensions 1x32x280x3
+    [11/13/2025-14:12:48] [I] Using random values for output shadow_net/sequence_rnn_module/logits_reshape:0
+    [11/13/2025-14:12:48] [I] Created output binding for shadow_net/sequence_rnn_module/logits_reshape:0 with dimensions 1x70x5440
+    [11/13/2025-14:12:48] [I] Starting inference
+    [11/13/2025-14:12:51] [I] Warmup completed 76 queries over 200 ms
+    [11/13/2025-14:12:51] [I] Timing trace has 1136 queries over 3.00617 s
+    [11/13/2025-14:12:51] [I]
+    [11/13/2025-14:12:51] [I] === Trace details ===
+    [11/13/2025-14:12:51] [I] Trace averages of 10 runs:
+    [11/13/2025-14:12:51] [I] Average on 10 runs - GPU latency: 2.60977 ms - Host latency: 2.68472 ms (enqueue 2.61699 ms)
+    [11/13/2025-14:12:51] [I] Average on 10 runs - GPU latency: 2.61192 ms - Host latency: 2.68686 ms (enqueue 2.61895 ms)
+    
+    [11/13/2025-14:12:51] [I] === Performance summary ===
+    [11/13/2025-14:12:51] [I] Throughput: 377.889 qps
+    [11/13/2025-14:12:51] [I] Latency: min = 2.67639 ms, max = 3.96631 ms, mean = 2.68789 ms, median = 2.68604 ms, percentile(99%) = 2.69409 ms
+    [11/13/2025-14:12:51] [I] Enqueue Time: min = 2.60913 ms, max = 3.89716 ms, mean = 2.62012 ms, median = 2.61816 ms, percentile(99%) = 2.62598 ms
+    [11/13/2025-14:12:51] [I] H2D Latency: min = 0.0114899 ms, max = 0.0132141 ms, mean = 0.0119658 ms, median = 0.0119629 ms, percentile(99%) = 0.0125732 ms
+    [11/13/2025-14:12:51] [I] GPU Compute Time: min = 2.60095 ms, max = 3.8902 ms, mean = 2.61287 ms, median = 2.61121 ms, percentile(99%) = 2.61938 ms
+    [11/13/2025-14:12:51] [I] D2H Latency: min = 0.0620117 ms, max = 0.0639648 ms, mean = 0.0630574 ms, median = 0.0629883 ms, percentile(99%) = 0.0637207 ms
+    [11/13/2025-14:12:51] [I] Total Host Walltime: 3.00617 s
+    [11/13/2025-14:12:51] [I] Total GPU Compute Time: 2.96822 s
+    [11/13/2025-14:12:51] [I] Explanations of the performance metrics are printed in the verbose logs.
+    [11/13/2025-14:12:51] [V]
+    [11/13/2025-14:12:51] [V] === Explanations of the performance metrics ===
+    [11/13/2025-14:12:51] [V] Total Host Walltime: the host walltime from when the first query (after warmups) is enqueued to when the last query is completed.
+    [11/13/2025-14:12:51] [V] GPU Compute Time: the GPU latency to execute the kernels for a query.
+    [11/13/2025-14:12:51] [V] Total GPU Compute Time: the summation of the GPU Compute Time of all the queries. If this is significantly shorter than Total Host Walltime, the GPU may be under-utilized because of host-side overheads or data transfers.
+    [11/13/2025-14:12:51] [V] Throughput: the observed throughput computed by dividing the number of queries by the Total Host Walltime. If this is significantly lower than the reciprocal of GPU Compute Time, the GPU may be under-utilized because of host-side overheads or data transfers.
+    [11/13/2025-14:12:51] [V] Enqueue Time: the host latency to enqueue a query. If this is longer than GPU Compute Time, the GPU may be under-utilized.
+    [11/13/2025-14:12:51] [V] H2D Latency: the latency for host-to-device data transfers for input tensors of a single query.
+    [11/13/2025-14:12:51] [V] D2H Latency: the latency for device-to-host data transfers for output tensors of a single query.
+    [11/13/2025-14:12:51] [V] Latency: the summation of H2D Latency, GPU Compute Time, and D2H Latency. This is the latency to infer a single query.
 
 
 # win err

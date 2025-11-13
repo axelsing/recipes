@@ -1,0 +1,9 @@
+
+
+1、Idioms https://en.cppreference.com/w/cpp/language.html
+    Curiously Recurring Template Pattern (CRTP)
+    Pointer to implementation (PIMPL)
+    Resource acquisition is initialization (RAII)
+    Rule of three/five/zero
+    Zero-overhead principle
+    

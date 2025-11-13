@@ -47,6 +47,13 @@ int main() {
         cudaDeviceSynchronize();
     }
 
+    {
+        int minGridSize, blockSize;
+        cudaOccupancyMaxPotentialBlockSize(
+                &minGridSize, &blockSize, hello, 0, 0);
+        printf("Optimal gridSize:%d blockSize=%d\n", minGridSize, blockSize);
+    }
+
     return 0;
 }
 
