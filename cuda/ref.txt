@@ -9,6 +9,8 @@
     nsys profile --trace=cuda,nvtx,osrt,cudnn,cublas -o sum_profile ./cudaSum
     nsys stats sum_profile.nsys-rep
     nsys analyze sum_profile.nsys-rep
+    
+    https://developer.nvidia.com/tensorrt
 	
 
 1、 CUDA Crash Course
@@ -61,6 +63,9 @@
     Prefix Sum（前缀和）	            并行扫描算法	                上升树 + 下降树
 
 # trtexec metric
+
+    D:\TensorRT-10.6.0.26\samples\trtexec 源代码
+    
     # trtexec --loadEngine=model_fp16.trt8 --verbose
     [11/13/2025-14:12:48] [I] [TRT] [MemUsageChange] TensorRT-managed allocation in building engine: CPU +12, GPU +36, now: CPU 12, GPU 36 (MiB)
     [11/13/2025-14:12:48] [I] Engine built in 33.1649 sec.
